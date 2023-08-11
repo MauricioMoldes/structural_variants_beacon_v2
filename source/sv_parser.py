@@ -91,10 +91,17 @@ def read_vcf():
     for rec in bcf_in.fetch('1', 10585, 14446418):
         bcf_out.write(rec)
 
+
+def read_tsv():
+    TODO
+
+
 """ write bff output in json array format """
 
+
 def write_json():
-    
+    TODO
+
 
 if __name__ == "__main__":
     try:
