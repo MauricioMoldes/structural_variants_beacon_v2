@@ -14,6 +14,8 @@ from pysam import VariantFile
 import logging
 import sys
 import os
+import socket
+
 
 logger = logging.getLogger('incomplete_submissions')
 
@@ -64,23 +66,95 @@ global variantInternalId
 global identifiers
 global identifiers_genomicHGVSId
 
-""" creates variant internal id """
+""" creates hostname """
+def create_hostname():
+    info_vcf2bff_hostname = print(socket.gethostname())
+    return info_vcf2bff_hostname
 
+""" creates variant file in """
+def create_filein(filename):
+    info_vcf2bff_filein = os.path.basename(filename)
+    return info_vcf2bff_filein
 
-def create_internal_id():
-    return "internal_id"
+""" creates user name """
+def create_user():
+    info_vcf2bff_user = os.getlogin()
+    return info_vcf2bff_user
 
+""" creates host number cpu """
+def create_ncpuhost():
+    info_vcf2bff_ncpuhost = os.cpu_count()
+    return info_vcf2bff_ncpuhost
 
-def create_file_in():
-    return "vcf2bff_filein"
+""" creates bff file out """
+def create_fileout():
+    info_vcf2bff_fileout = 'genomicVariantsVcf_test.json.gz' # Needs modification depending on what we want to put
+    return info_vcf2bff_fileout
 
+""" creates path (cwd) to variants file """
+def create_cwd():
+    info_vcf2bff_cwd = '/fullpath/to/data_test/beacon_4524514test/vcf' # Needs modification depending on what we want to put
+    return info_vcf2bff_cwd
+
+""" creates variants project directory name"""
+def create_projectDir():
+    info_vcf2bff_projectDir = 'beacon_4524514test' # Needs modification depending on what we want to put
+    return info_vcf2bff_projectDir
+
+""" creates version of the beacon"""
+def create_version():
+    info_vcf2bff_version = '1.0.0' # Needs modification depending on what we want to put (come from config file from deploy?)
+    return info_vcf2bff_version
+
+""" creates datasetId (default one if none is provided?)"""
+def create_datasetId():
+    info_datasetId = 'default_beacon_1' # Needs modification depending on what we want to put
+    return info_datasetId
+
+""" creates genome"""
+def create_genome():
+    info_genome = 'hg19' # Needs to be automatised (from vcf or tsv?)
+    return info_genome
 
 """ wrapper for generating internal information """
+def internal_information(data):
+
+    filename = '../data/EEE_SV-Pop_1.ALL.sites.20181204.annotated.uniq.tsv' # File name that was processed (vcf or tsv?)
+    data['info']['vcf2bff']['hostname'] = create_hostname() # Hostname
+    data['info']['vcf2bff']['filein'] = create_filein(filename) # File in
+    data['info']['vcf2bff']['user'] = create_user() # User
+    data['info']['vcf2bff']['ncpuhost'] = create_ncpuhost() # Number of cpu's
+    data['info']['vcf2bff']['fileout'] = create_fileout() # File out
+    data['info']['vcf2bff']['cwd'] = create_cwd() # Path to output folder
+    data['info']['vcf2bff']['cwd'] = create_cwd() # Path to output folder
+    data['info']['vcf2bff']['projectDir'] = create_projectDir() # Path to output final project directory
+    data['info']['vcf2bff']['version'] = create_version() # Version of the Beacon
 
 
-def internal_information():
-    create_internal_id()
-    create_file_in()
+""" Receives Genotype, returns zygosity"""
+
+def case_level_data(genotype):
+    zygosity = None
+
+    if genotype == '0/1' or genotype == '0|1' or genotype == '1/0' or genotype == '1|0' or genotype == '0':
+        zygosity = "GENO:GENO_0000458"
+    if genotype == '1/1' or genotype == '1|1' or genotype == '1':
+        zygosity = "GENO:GENO_0000136"
+
+    return zygosity
+
+
+""" Verifies if multiple samples are present, assign each genotype to sample"""
+
+
+def multi_sample_case_level_data(case_level_data_biosampleId, sample_genotypes):
+    samples = []
+    genotypes = []
+    if "," in case_level_data_biosampleId:  # uses sample field to verify if multi sample
+        samples = case_level_data_biosampleId.split(sep=",")  # split sample
+
+        #for samples, sample_genotypes in:
+            #return None  # assign genotype and zygosity per sample
 
 
 """ Receives Genotype, returns zygosity"""
@@ -194,7 +268,21 @@ def bff_post_processing():
     os.system("sed -i 's/}{/},{/' ../results/g_variants_sv.json")
 
 
+
 """ write bff output in json array format """
+
+
+def read_json():
+    ## Transform from bff to python dictionary
+    with open('../data/first_json_template.json') as json_file:
+        data = json.load(json_file)  # Load json to python
+
+    return data
+
+
+
+""" write bff output in json array format """
+
 
 
 def read_json():
@@ -226,6 +314,9 @@ if __name__ == "__main__":
         data = read_json()  # READS BFF TEMPLATE
         # pre_process_tsv()
         read_tsv(data)  # POPULATE STUFF
+
+        internal_information(data)  # POPULATE INTERNAL INFORMATION
+
         bff_post_processing()
 
     except Exception as e:
