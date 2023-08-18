@@ -16,6 +16,7 @@ import sys
 import os
 import socket
 
+
 logger = logging.getLogger('incomplete_submissions')
 
 global id
@@ -156,6 +157,33 @@ def multi_sample_case_level_data(case_level_data_biosampleId, sample_genotypes):
             #return None  # assign genotype and zygosity per sample
 
 
+""" Receives Genotype, returns zygosity"""
+
+
+def case_level_data(genotype):
+    zygosity = None
+
+    if genotype == '0/1' or genotype == '0|1' or genotype == '1/0' or genotype == '1|0' or genotype == '0':
+        zygosity = "GENO:GENO_0000458"
+    if genotype == '1/1' or genotype == '1|1' or genotype == '1':
+        zygosity = "GENO:GENO_0000136"
+
+    return zygosity
+
+
+""" Verifies if multiple samples are present, assign each genotype to sample"""
+
+
+def multi_sample_case_level_data(case_level_data_biosampleId, sample_genotypes):
+    samples = []
+    genotypes = []
+    if "," in case_level_data_biosampleId:  # uses sample field to verify if multi sample
+        samples = case_level_data_biosampleId.split(sep=",")  # split sample
+
+        #for samples, sample_genotypes in:
+            #return None  # assign genotype and zygosity per sample
+
+
 """ reads vcf """
 
 
@@ -240,7 +268,21 @@ def bff_post_processing():
     os.system("sed -i 's/}{/},{/' ../results/g_variants_sv.json")
 
 
+
 """ write bff output in json array format """
+
+
+def read_json():
+    ## Transform from bff to python dictionary
+    with open('../data/first_json_template.json') as json_file:
+        data = json.load(json_file)  # Load json to python
+
+    return data
+
+
+
+""" write bff output in json array format """
+
 
 
 def read_json():
@@ -272,7 +314,9 @@ if __name__ == "__main__":
         data = read_json()  # READS BFF TEMPLATE
         # pre_process_tsv()
         read_tsv(data)  # POPULATE STUFF
+
         internal_information(data)  # POPULATE INTERNAL INFORMATION
+
         bff_post_processing()
 
     except Exception as e:
