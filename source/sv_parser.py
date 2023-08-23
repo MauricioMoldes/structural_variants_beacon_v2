@@ -15,7 +15,7 @@ import logging
 import sys
 import os
 import socket
-
+import argparse
 
 logger = logging.getLogger('incomplete_submissions')
 
@@ -67,94 +67,99 @@ global identifiers
 global identifiers_genomicHGVSId
 
 """ creates hostname """
+
+
 def create_hostname():
-    info_vcf2bff_hostname = print(socket.gethostname())
+    info_vcf2bff_hostname = socket.gethostname()
     return info_vcf2bff_hostname
 
+
 """ creates variant file in """
+
+
 def create_filein(filename):
     info_vcf2bff_filein = os.path.basename(filename)
     return info_vcf2bff_filein
 
+
 """ creates user name """
+
+
 def create_user():
     info_vcf2bff_user = os.getlogin()
     return info_vcf2bff_user
 
+
 """ creates host number cpu """
+
+
 def create_ncpuhost():
     info_vcf2bff_ncpuhost = os.cpu_count()
     return info_vcf2bff_ncpuhost
 
+
 """ creates bff file out """
+
+
 def create_fileout():
-    info_vcf2bff_fileout = 'genomicVariantsVcf_test.json.gz' # Needs modification depending on what we want to put
+    info_vcf2bff_fileout = 'genomicVariantsVcf_test.json.gz'  # Needs modification depending on what we want to put
     return info_vcf2bff_fileout
 
+
 """ creates path (cwd) to variants file """
+
+
 def create_cwd():
-    info_vcf2bff_cwd = '/fullpath/to/data_test/beacon_4524514test/vcf' # Needs modification depending on what we want to put
+    info_vcf2bff_cwd = '/fullpath/to/data_test/beacon_4524514test/vcf'  # Needs modification depending on what we want to put
     return info_vcf2bff_cwd
 
+
 """ creates variants project directory name"""
+
+
 def create_projectDir():
-    info_vcf2bff_projectDir = 'beacon_4524514test' # Needs modification depending on what we want to put
+    info_vcf2bff_projectDir = 'beacon_4524514test'  # Needs modification depending on what we want to put
     return info_vcf2bff_projectDir
 
+
 """ creates version of the beacon"""
+
+
 def create_version():
-    info_vcf2bff_version = '1.0.0' # Needs modification depending on what we want to put (come from config file from deploy?)
+    info_vcf2bff_version = '1.0.0'  # Needs modification depending on what we want to put (come from config file from deploy?)
     return info_vcf2bff_version
 
+
 """ creates datasetId (default one if none is provided?)"""
+
+
 def create_datasetId():
-    info_datasetId = 'default_beacon_1' # Needs modification depending on what we want to put
+    info_datasetId = 'default_beacon_1'  # Needs modification depending on what we want to put
     return info_datasetId
 
+
 """ creates genome"""
+
+
 def create_genome():
-    info_genome = 'hg19' # Needs to be automatised (from vcf or tsv?)
+    info_genome = 'hg19'  # Needs to be automatised (from vcf or tsv?)
     return info_genome
 
+
 """ wrapper for generating internal information """
+
+
 def internal_information(data):
-
-    filename = '../data/EEE_SV-Pop_1.ALL.sites.20181204.annotated.uniq.tsv' # File name that was processed (vcf or tsv?)
-    data['info']['vcf2bff']['hostname'] = create_hostname() # Hostname
-    data['info']['vcf2bff']['filein'] = create_filein(filename) # File in
-    data['info']['vcf2bff']['user'] = create_user() # User
-    data['info']['vcf2bff']['ncpuhost'] = create_ncpuhost() # Number of cpu's
-    data['info']['vcf2bff']['fileout'] = create_fileout() # File out
-    data['info']['vcf2bff']['cwd'] = create_cwd() # Path to output folder
-    data['info']['vcf2bff']['cwd'] = create_cwd() # Path to output folder
-    data['info']['vcf2bff']['projectDir'] = create_projectDir() # Path to output final project directory
-    data['info']['vcf2bff']['version'] = create_version() # Version of the Beacon
-
-
-""" Receives Genotype, returns zygosity"""
-
-def case_level_data(genotype):
-    zygosity = None
-
-    if genotype == '0/1' or genotype == '0|1' or genotype == '1/0' or genotype == '1|0' or genotype == '0':
-        zygosity = "GENO:GENO_0000458"
-    if genotype == '1/1' or genotype == '1|1' or genotype == '1':
-        zygosity = "GENO:GENO_0000136"
-
-    return zygosity
-
-
-""" Verifies if multiple samples are present, assign each genotype to sample"""
-
-
-def multi_sample_case_level_data(case_level_data_biosampleId, sample_genotypes):
-    samples = []
-    genotypes = []
-    if "," in case_level_data_biosampleId:  # uses sample field to verify if multi sample
-        samples = case_level_data_biosampleId.split(sep=",")  # split sample
-
-        #for samples, sample_genotypes in:
-            #return None  # assign genotype and zygosity per sample
+    filename = '../data/EEE_SV-Pop_1.ALL.sites.20181204.annotated.uniq.tsv'  # File name that was processed (vcf or tsv?)
+    data['_info']['vcf2bff']['hostname'] = create_hostname()  # Hostname
+    data['_info']['vcf2bff']['filein'] = create_filein(filename)  # File in
+    data['_info']['vcf2bff']['user'] = create_user()  # User
+    data['_info']['vcf2bff']['ncpuhost'] = create_ncpuhost()  # Number of cpu's
+    data['_info']['vcf2bff']['fileout'] = create_fileout()  # File out
+    data['_info']['vcf2bff']['cwd'] = create_cwd()  # Path to output folder
+    data['_info']['vcf2bff']['cwd'] = create_cwd()  # Path to output folder
+    data['_info']['vcf2bff']['projectDir'] = create_projectDir()  # Path to output final project directory
+    data['_info']['vcf2bff']['version'] = create_version()  # Version of the Beacon
 
 
 """ Receives Genotype, returns zygosity"""
@@ -179,9 +184,30 @@ def multi_sample_case_level_data(case_level_data_biosampleId, sample_genotypes):
     genotypes = []
     if "," in case_level_data_biosampleId:  # uses sample field to verify if multi sample
         samples = case_level_data_biosampleId.split(sep=",")  # split sample
+        for sample in samples:
+            # reads genotype
 
-        #for samples, sample_genotypes in:
-            #return None  # assign genotype and zygosity per sample
+            # return None  # assign genotype and zygosity per sample
+            genotype = "1"
+            case_level_data(genotype)
+
+    return None
+
+
+""" Receives Genotype, returns zygosity"""
+
+
+def case_level_data(genotype):
+    zygosity = None
+
+    if genotype == '0/1' or genotype == '0|1' or genotype == '1/0' or genotype == '1|0' or genotype == '0':
+        zygosity = "GENO:GENO_0000458"
+    if genotype == '1/1' or genotype == '1|1' or genotype == '1':
+        zygosity = "GENO:GENO_0000136"
+     # TODO "./."
+     # unkown / unkown
+
+    return zygosity
 
 
 """ reads vcf """
@@ -195,12 +221,25 @@ def read_vcf():
         bcf_out.write(rec)
 
 
+""" Splits annotSV annotated TSV """
+
+
 def pre_process_tsv():
-    os.system("cat ../data/lumpy.annotated.tsv | cut -f1-15 | sort | uniq > ../data/lumpy.annotated.uniq.tsv")
+    # counts number of samples
+    samples_list = []
+    with open('../data/EEE_SV-Pop_1.ALL.sites.20181204.annotated.tsv') as fd:
+        rd = csv.reader(fd, delimiter="\t", quotechar='"')
+        row1 = next(rd)
+        samples = row1[7]
+        samples_list = samples.split(sep=",")
+        cut_end = len(samples_list)
+
+    os.system(
+        "cat ../data/EEE_SV-Pop_1.ALL.sites.20181204.annotated.tsv | cut -f1-29 | sort | uniq > ../data/EEE_SV-Pop_1.ALL.sites.20181204.annotated.uniq.tsv")
 
 
 def read_tsv(data):
-    with open('../data/EEE_SV-Pop_1.ALL.sites.20181204.annotated.uniq.tsv') as fd:
+    with open('../data/manta.annotated.uniq.tsv') as fd:
         rd = csv.reader(fd, delimiter="\t", quotechar='"')
         for row in rd:
             position_start_integer = row[2]
@@ -209,13 +248,47 @@ def read_tsv(data):
             position_end = row[3]
             position_refseqId = row[1]
             position_assemblyId = "hg19"
-            case_level_data_zigosity_label_raw = row[14]
-            case_level_data_zigosity_label = case_level_data_zigosity_label_raw.split(sep=":")[0]
-            list_genotypes = case_level_data_zigosity_label_raw.split(sep=":")
-            case_level_data_zigosity_id = case_level_data(case_level_data_zigosity_label)
             case_level_data_biosampleId = row[6]
+            # calculate number of samples
+            samples = []
+            genotypes = []
+            zygozytes = []
+            if "," in case_level_data_biosampleId:  # uses sample field to verify if multi sample
+                samples = case_level_data_biosampleId.split(sep=",")  # split sample
 
-            multi_sample_case_level_data(case_level_data_biosampleId, list_genotypes)
+            else:
+                samples.append(case_level_data_biosampleId)
+                # use case 1 sample, N samples
+            number_samples = len(samples)
+            max_sample_position = 14 + number_samples
+            case_level_data_zigosity_label_raw = row[14:max_sample_position]
+            for genotype_raw in case_level_data_zigosity_label_raw:
+                genotype = genotype_raw.split(sep=":")[0]
+                genotypes.append(genotype)
+                zygozyte = case_level_data(genotype)
+                zygozytes.append(zygozyte)
+
+            # add as many casa_level_data as we have samples
+            for i in range(0, number_samples):
+                sample = samples[i]
+                genotype = genotypes[i]
+                zygozyte = zygozytes[i]
+
+                # data['caseLevelData'][0]['biosampleId'] = sample
+                # data['caseLevelData'][0]['zygosity']['label'] = genotype
+                # data['caseLevelData'][0]['zygosity']['id'] = zygozyte
+
+                case_level_data_dict = {
+                    "zygosity": {
+                        "id": zygozyte,
+                        "label": genotype,
+                    },
+                    "biosampleId": sample
+                }
+                print(case_level_data_dict)
+                data["caseLevelData"].append(case_level_data_dict)
+                # attempt to clear dictionary
+                case_level_data_dict = {}
 
             variation_variant_type = row[5]
             variation_alternate_bases = row[9]
@@ -256,17 +329,37 @@ def read_tsv(data):
             data['variation']['referenceBases'] = variation_reference_bases
             data['variation']['variantType'] = variation_variant_type
 
-            # TODO
-            # data['caseLevelData']['zygosity']['label'] = case_level_data_zigosity_label
-            # data['caseLevelData']['zygosity']['id'] = case_level_data_zigosity_id
-            # data['caseLevelData']['biosampleId'] = case_level_data_biosampleId
+            filename = '../data/EEE_SV-Pop_1.ALL.sites.20181204.annotated.uniq.tsv'  # File name that was processed (vcf or tsv?)
+            data['_info']['vcf2bff']['hostname'] = create_hostname()  # Hostname
+            data['_info']['vcf2bff']['filein'] = create_filein(filename)  # File in
+            data['_info']['vcf2bff']['user'] = create_user()  # User
+            data['_info']['vcf2bff']['ncpuhost'] = create_ncpuhost()  # Number of cpu's
+            data['_info']['vcf2bff']['fileout'] = create_fileout()  # File out
+            data['_info']['vcf2bff']['cwd'] = create_cwd()  # Path to output folder
+            data['_info']['vcf2bff']['cwd'] = create_cwd()  # Path to output folder
+            data['_info']['vcf2bff']['projectDir'] = create_projectDir()  # Path to output final project directory
+            data['_info']['vcf2bff']['version'] = create_version()  # Version of the Beacon
 
             write_json(data)
+            data = read_json()
+
+
+""" Adds semicomma to bff """
 
 
 def bff_post_processing():
     os.system("sed -i 's/}{/},{/' ../results/g_variants_sv.json")
 
+
+""" Annotates vcf with svAnnot """
+
+
+def annotate_vcf():
+    ##add annotSV to path and run
+    os.system(
+        "export ANNOTSV=/home/mmoldes/Documents/EGA/bioteam/CNV_as_EGA_service/discovery_of_strucutral_variants_as_an_EGA_service/bin/AnnotSV && "
+        "$ANNOTSV/bin/AnnotSV -SVinputFile /home/mmoldes/Documents/EGA/bioteam/structural_variants_beacon_v2/data/gridss.vcf.gz -genomeBuild GRCh37 -outputDir /home/mmoldes/Documents/EGA/bioteam/structural_variants_beacon_v2/data"
+    )
 
 
 """ write bff output in json array format """
@@ -280,9 +373,7 @@ def read_json():
     return data
 
 
-
 """ write bff output in json array format """
-
 
 
 def read_json():
@@ -305,18 +396,36 @@ def write_json(data):
         outfile.write(json_object)
 
 
+def arguments_parser(args):
+    parser = argparse.ArgumentParser(
+        prog='sv_parser',
+        description='What the program does',
+        epilog='Text at the bottom of help')
+
+    parser.add_argument('integers', metavar='N', type=int, nargs='+',
+                        help='an integer for the accumulator')
+    parser.add_argument('--sum', dest='accumulate', action='store_const',
+                        const=sum, default=max,
+                        help='sum the integers (default: find the max)')
+
+    return parser
+
+    # TODO on main
+    # args = parser.parse_args()
+    print(args.filename, args.count, args.verbose)
+
+
 if __name__ == "__main__":
     try:
         # configure logging
         log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s [in %(pathname)s:%(lineno)d]'
         logging.basicConfig(format=log_format)
         # execute main function
+        # annotate_vcf() # ANNOTATES VCF WITH ANNOTSV
         data = read_json()  # READS BFF TEMPLATE
-        # pre_process_tsv()
+        pre_process_tsv()
         read_tsv(data)  # POPULATE STUFF
-
-        internal_information(data)  # POPULATE INTERNAL INFORMATION
-
+        # internal_information(data)  # POPULATE INTERNAL INFORMATION
         bff_post_processing()
 
     except Exception as e:
