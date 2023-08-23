@@ -179,19 +179,46 @@ def case_level_data(genotype):
 """ Verifies if multiple samples are present, assign each genotype to sample"""
 
 
-def multi_sample_case_level_data(case_level_data_biosampleId, sample_genotypes):
+def multi_sample_case_level_data(case_level_data_biosampleId, data, row):
+    # calculate number of samples
     samples = []
     genotypes = []
+    zygozytes = []
     if "," in case_level_data_biosampleId:  # uses sample field to verify if multi sample
         samples = case_level_data_biosampleId.split(sep=",")  # split sample
-        for sample in samples:
-            # reads genotype
+    else:
+        samples.append(case_level_data_biosampleId)
+    if "," in case_level_data_biosampleId:  # uses sample field to verify if multi sample
+        samples = case_level_data_biosampleId.split(sep=",")  # split sample
+    else:
+        samples.append(case_level_data_biosampleId)
 
-            # return None  # assign genotype and zygosity per sample
-            genotype = "1"
-            case_level_data(genotype)
+    number_samples = len(samples)
+    max_sample_position = 14 + number_samples
+    case_level_data_zigosity_label_raw = row[14:max_sample_position]
+    for genotype_raw in case_level_data_zigosity_label_raw:
+        genotype = genotype_raw.split(sep=":")[0]
+        genotypes.append(genotype)
+        zygozyte = case_level_data(genotype)
+        zygozytes.append(zygozyte)
+    # add as many casa_level_data as we have samples
+    for i in range(0, number_samples):
+        sample = samples[i]
+        genotype = genotypes[i]
+        zygozyte = zygozytes[i]
 
-    return None
+        case_level_data_dict = {
+            "zygosity": {
+                "id": zygozyte,
+                "label": genotype,
+            },
+            "biosampleId": sample
+        }
+        data["caseLevelData"].append(case_level_data_dict)
+        # attempt to clear dictionary
+        case_level_data_dict = {}
+
+    return data
 
 
 """ Receives Genotype, returns zygosity"""
@@ -204,8 +231,10 @@ def case_level_data(genotype):
         zygosity = "GENO:GENO_0000458"
     if genotype == '1/1' or genotype == '1|1' or genotype == '1':
         zygosity = "GENO:GENO_0000136"
-     # TODO "./."
-     # unkown / unkown
+    if genotype == "./." or genotype == ".|.":
+        zygosity = None 
+    # TODO "./."
+    # unkown / unkown
 
     return zygosity
 
@@ -238,27 +267,34 @@ def pre_process_tsv():
         "cat ../data/EEE_SV-Pop_1.ALL.sites.20181204.annotated.tsv | cut -f1-29 | sort | uniq > ../data/EEE_SV-Pop_1.ALL.sites.20181204.annotated.uniq.tsv")
 
 
+def get_value(row, position):
+    value = row[position]
+    return value
+
+
 def read_tsv(data):
-    with open('../data/manta.annotated.uniq.tsv') as fd:
+    with open('../data/lumpy.annotated.tsv') as fd:
         rd = csv.reader(fd, delimiter="\t", quotechar='"')
         for row in rd:
-            position_start_integer = row[2]
-            position_end_integer = row[3]
-            position_start = row[2]
-            position_end = row[3]
-            position_refseqId = row[1]
+            position_start_integer = get_value(row,2)
+            position_end_integer = get_value(row,3)
+            position_start = get_value(row,2)
+            position_end = get_value(row,3)
+            position_refseqId = get_value(row,1)
             position_assemblyId = "hg19"
-            case_level_data_biosampleId = row[6]
+            case_level_data_biosampleId = get_value(row,6)
+
+            data = multi_sample_case_level_data(case_level_data_biosampleId, data, row)
+
             # calculate number of samples
             samples = []
             genotypes = []
             zygozytes = []
             if "," in case_level_data_biosampleId:  # uses sample field to verify if multi sample
                 samples = case_level_data_biosampleId.split(sep=",")  # split sample
-
             else:
                 samples.append(case_level_data_biosampleId)
-                # use case 1 sample, N samples
+
             number_samples = len(samples)
             max_sample_position = 14 + number_samples
             case_level_data_zigosity_label_raw = row[14:max_sample_position]
@@ -267,16 +303,11 @@ def read_tsv(data):
                 genotypes.append(genotype)
                 zygozyte = case_level_data(genotype)
                 zygozytes.append(zygozyte)
-
             # add as many casa_level_data as we have samples
             for i in range(0, number_samples):
                 sample = samples[i]
                 genotype = genotypes[i]
                 zygozyte = zygozytes[i]
-
-                # data['caseLevelData'][0]['biosampleId'] = sample
-                # data['caseLevelData'][0]['zygosity']['label'] = genotype
-                # data['caseLevelData'][0]['zygosity']['id'] = zygozyte
 
                 case_level_data_dict = {
                     "zygosity": {
@@ -290,19 +321,19 @@ def read_tsv(data):
                 # attempt to clear dictionary
                 case_level_data_dict = {}
 
-            variation_variant_type = row[5]
-            variation_alternate_bases = row[9]
-            variation_reference_bases = row[8]
-            variation_location_interval_start_value = row[2]
+            variation_variant_type = get_value(row,5)
+            variation_alternate_bases = get_value(row,9)
+            variation_reference_bases = get_value(row,8)
+            variation_location_interval_start_value = get_value(row,2)
             variation_location_interval_start_type = "Number"
-            variation_location_interval_end_value = row[3]
+            variation_location_interval_end_value = get_value(row,3)
             variation_location_interval_end_type = "Number"
             variation_location_type = "SequenceLocation"
-            variation_location_sequence_id = row[5]
-            variant_internal_id = row[0]
-            identifiers_genomic_hgvs_id = row[5]
-            variant_quality_filter = row[11]
-            variant_quality_qual = row[10]
+            variation_location_sequence_id = get_value(row,5)
+            variant_internal_id = get_value(row,0)
+            identifiers_genomic_hgvs_id = get_value(row,5)
+            variant_quality_filter = get_value(row,11)
+            variant_quality_qual = get_value(row,10)
             variation_location_interval_type = "TODO"
 
             data['variantInternalId'] = variant_internal_id
@@ -313,10 +344,8 @@ def read_tsv(data):
             data['_position']['refseqId'] = position_refseqId
             data['_position']['startInteger'] = position_start_integer
             data['_position']['start'] = position_start
-
             data['variantQuality']['QUAL'] = variant_quality_qual
             data['variantQuality']['FILTER'] = variant_quality_filter
-
             data['variation']['location']['sequence_id'] = variation_location_sequence_id
             data['variation']['location']['type'] = variation_location_type
             data['variation']['location']['interval']['start']['type'] = variation_location_interval_start_type
@@ -324,11 +353,9 @@ def read_tsv(data):
             data['variation']['location']['interval']['end']['type'] = variation_location_interval_end_type
             data['variation']['location']['interval']['end']['value'] = variation_location_interval_end_value
             data['variation']['location']['interval']['type'] = variation_location_interval_type
-
             data['variation']['alternateBases'] = variation_alternate_bases
             data['variation']['referenceBases'] = variation_reference_bases
             data['variation']['variantType'] = variation_variant_type
-
             filename = '../data/EEE_SV-Pop_1.ALL.sites.20181204.annotated.uniq.tsv'  # File name that was processed (vcf or tsv?)
             data['_info']['vcf2bff']['hostname'] = create_hostname()  # Hostname
             data['_info']['vcf2bff']['filein'] = create_filein(filename)  # File in
@@ -339,7 +366,6 @@ def read_tsv(data):
             data['_info']['vcf2bff']['cwd'] = create_cwd()  # Path to output folder
             data['_info']['vcf2bff']['projectDir'] = create_projectDir()  # Path to output final project directory
             data['_info']['vcf2bff']['version'] = create_version()  # Version of the Beacon
-
             write_json(data)
             data = read_json()
 
@@ -354,11 +380,11 @@ def bff_post_processing():
 """ Annotates vcf with svAnnot """
 
 
-def annotate_vcf():
+def annotate_vcf(filename):
     ##add annotSV to path and run
     os.system(
         "export ANNOTSV=/home/mmoldes/Documents/EGA/bioteam/CNV_as_EGA_service/discovery_of_strucutral_variants_as_an_EGA_service/bin/AnnotSV && "
-        "$ANNOTSV/bin/AnnotSV -SVinputFile /home/mmoldes/Documents/EGA/bioteam/structural_variants_beacon_v2/data/gridss.vcf.gz -genomeBuild GRCh37 -outputDir /home/mmoldes/Documents/EGA/bioteam/structural_variants_beacon_v2/data"
+        "$ANNOTSV/bin/AnnotSV -SVinputFile /home/mmoldes/Documents/EGA/bioteam/structural_variants_beacon_v2/data/" + filename + " -genomeBuild GRCh37 -outputDir /home/mmoldes/Documents/EGA/bioteam/structural_variants_beacon_v2/data"
     )
 
 
@@ -421,9 +447,16 @@ if __name__ == "__main__":
         log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s [in %(pathname)s:%(lineno)d]'
         logging.basicConfig(format=log_format)
         # execute main function
-        # annotate_vcf() # ANNOTATES VCF WITH ANNOTSV
+        # annotate_vcf("delly.vcf.gz") # ANNOTATES VCF WITH ANNOTSV
+        # annotate_vcf("gridss.vcf.gz")
+        # annotate_vcf("manta.vcf.gz")
+        # annotate_vcf("lumpy.vcf.gz")
+        # annotate_vcf("EEE_SV-Pop_1.ALL.sites.20181204.vcf.gz")
+
+        # todo
+        # pre_process_tsv("manta.vcf.gz")
+
         data = read_json()  # READS BFF TEMPLATE
-        pre_process_tsv()
         read_tsv(data)  # POPULATE STUFF
         # internal_information(data)  # POPULATE INTERNAL INFORMATION
         bff_post_processing()
