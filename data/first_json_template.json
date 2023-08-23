@@ -1,0 +1,76 @@
+{
+    "variantInternalId": "",
+    "identifiers": {
+        "genomicHGVSId": ""
+    },
+    "_position": {
+        "assemblyId": "",
+        "endInteger": "",
+        "end": [
+            
+        ],
+        "refseqId": "",
+        "startInteger": "",
+        "start": [
+            
+        ]
+    },
+    "variantQuality": {
+        "QUAL": "",
+        "FILTER": ""
+    },
+    "_info": {
+        "datasetId": "",
+        "vcf2bff": {
+            "filein": "",
+            "ncpuhost": "",
+            "hostname": "",
+            "user": "",
+            "fileout": "",
+            "cwd": "",
+            "version": "",
+            "projectDir": ""
+        },
+        "genome": ""
+    },
+    "variation": {
+        "location": {
+            "sequence_id": "",
+            "type": "",
+            "interval": {
+                "start": {
+                    "type": "",
+                    "value": ""
+                },
+                "end": {
+                    "type": "",
+                    "value": ""
+                },
+                "type": ""
+            }
+        },
+        "alternateBases": "",
+        "referenceBases": "",
+        "variantType": ""
+    },
+    "caseLevelData": [
+        
+    ],
+    "molecularAttributes": {
+        "molecularEffects": [
+            {
+                "label": "",
+                "id": ""
+            }
+        ],
+        "annotationImpact": [
+            ""
+        ],
+        "aminoacidChanges": [
+            ""
+        ],
+        "geneIds": [
+            ""
+        ]
+    }
+}
