@@ -232,7 +232,7 @@ def case_level_data(genotype):
     if genotype == '1/1' or genotype == '1|1' or genotype == '1':
         zygosity = "GENO:GENO_0000136"
     if genotype == "./." or genotype == ".|.":
-        zygosity = None 
+        zygosity = None
     # TODO "./."
     # unkown / unkown
 
@@ -267,24 +267,90 @@ def pre_process_tsv():
         "cat ../data/EEE_SV-Pop_1.ALL.sites.20181204.annotated.tsv | cut -f1-29 | sort | uniq > ../data/EEE_SV-Pop_1.ALL.sites.20181204.annotated.uniq.tsv")
 
 
-def get_value(row, position):
-    value = row[position]
+def parse_annotated_target_attribute(annotated_tsv, collumn):
+    try:
+        value = annotated_tsv[collumn]
+    except Exception as e:
+        logger.error("Error: {}".format(e))
+        value = None
+
     return value
 
 
-def read_tsv(data):
-    with open('../data/lumpy.annotated.tsv') as fd:
-        rd = csv.reader(fd, delimiter="\t", quotechar='"')
-        for row in rd:
-            position_start_integer = get_value(row,2)
-            position_end_integer = get_value(row,3)
-            position_start = get_value(row,2)
-            position_end = get_value(row,3)
-            position_refseqId = get_value(row,1)
-            position_assemblyId = "hg19"
-            case_level_data_biosampleId = get_value(row,6)
+""" PARSES ATTRIBUTE """
 
-            data = multi_sample_case_level_data(case_level_data_biosampleId, data, row)
+
+def parse_target_attribute(response_info, attribute):
+    try:
+        result = response_info[attribute]
+    except Exception as e:
+        logger.error("Error: {}".format(e))
+        result = None
+    return result
+
+
+""" POPULATES DATA """
+
+
+def parse_multiple_target_attribute(data, attribute, value):
+    if attribute == "variant_internal_id":
+        try:
+            data['variantInternalId'] = value
+        except Exception as e:
+            logger.error("Error: {}".format(e))
+    elif attribute == "identifiers_genomic_hgvs_id":
+        try:
+            data['identifiers']['genomicHGVSId'] = value
+        except Exception as e:
+            logger.error("Error: {}".format(e))
+    elif attribute == "position_assemblyId":
+        try:
+            data['_position']['assemblyId'] = value
+        except Exception as e:
+            logger.error("Error: {}".format(e))
+    elif attribute == "position_end":
+        try:
+            data['_position']['end'] = value
+        except Exception as e:
+            logger.error("Error: {}".format(e))
+
+    return data
+
+
+def parse_annotation():
+    # specification documentation https://docs.genomebeacons.org/schemas-md/obj/molecularAttributes/
+
+    return None
+
+
+def read_tsv(data, filepath):
+    with open("../data/" + filepath) as fd:
+        rd = csv.reader(fd, delimiter="\t", quotechar='"')
+        next(rd, None)  # skip the headers
+        for row in rd:
+            position_start_integer = parse_annotated_target_attribute(row, 2)
+            position_end_integer = parse_annotated_target_attribute(row, 3)
+            position_start = parse_annotated_target_attribute(row, 2)
+            position_end = parse_annotated_target_attribute(row, 3)
+            position_refseqId = parse_annotated_target_attribute(row, 1)
+            position_assemblyId = "hg19"
+            case_level_data_biosampleId = parse_annotated_target_attribute(row, 6)
+
+            # PUT into correct place
+            # count number of affected genes
+            genes = parse_annotated_target_attribute(row, 17)
+            list_genes = []
+            if ";" in genes:
+                list_genes = genes.split(";")
+            else:
+                list_genes.append(genes)
+
+            set_of_genes = ','.join(list_genes)
+
+            data['molecularAttributes']['geneIds'][0] = set_of_genes
+
+            # TODO
+            # data = multi_sample_case_level_data(case_level_data_biosampleId, data, row)
 
             # calculate number of samples
             samples = []
@@ -321,20 +387,47 @@ def read_tsv(data):
                 # attempt to clear dictionary
                 case_level_data_dict = {}
 
-            variation_variant_type = get_value(row,5)
-            variation_alternate_bases = get_value(row,9)
-            variation_reference_bases = get_value(row,8)
-            variation_location_interval_start_value = get_value(row,2)
+            variation_variant_type = parse_annotated_target_attribute(row, 5)
+            variation_alternate_bases = parse_annotated_target_attribute(row, 9)
+            variation_reference_bases = parse_annotated_target_attribute(row, 8)
+            variation_location_interval_start_value = parse_annotated_target_attribute(row, 2)
             variation_location_interval_start_type = "Number"
-            variation_location_interval_end_value = get_value(row,3)
+            variation_location_interval_end_value = parse_annotated_target_attribute(row, 3)
             variation_location_interval_end_type = "Number"
             variation_location_type = "SequenceLocation"
-            variation_location_sequence_id = get_value(row,5)
-            variant_internal_id = get_value(row,0)
-            identifiers_genomic_hgvs_id = get_value(row,5)
-            variant_quality_filter = get_value(row,11)
-            variant_quality_qual = get_value(row,10)
-            variation_location_interval_type = "TODO"
+            variation_location_sequence_id = parse_annotated_target_attribute(row, 5)
+            variant_internal_id = parse_annotated_target_attribute(row, 0)
+            identifiers_genomic_hgvs_id = parse_annotated_target_attribute(row, 5)
+            variant_quality_filter = parse_annotated_target_attribute(row, 11)
+            variant_quality_qual = parse_annotated_target_attribute(row, 10)
+            variation_location_interval_type = "SequenceLocation"
+
+            # data = parse_multiple_target_attribute(data, 'variantInternalId', variant_internal_id)
+            # data = parse_multiple_target_attribute(data, 'identifiers_genomic_hgvs_id', identifiers_genomic_hgvs_id)
+            # data = parse_multiple_target_attribute(data, 'position_assemblyId', position_assemblyId)
+            # data = parse_multiple_target_attribute(data, 'position_end', position_end)
+            # data = parse_multiple_target_attribute(data, 'position_end_integer', position_end_integer)
+            # data = parse_multiple_target_attribute(data, 'position_refseqId', position_refseqId)
+            # data = parse_multiple_target_attribute(data, 'position_start_integer', position_start_integer)
+            # data = parse_multiple_target_attribute(data, 'position_start', position_start)
+            # data = parse_multiple_target_attribute(data, 'variant_quality_qual', variant_quality_qual)
+            # data = parse_multiple_target_attribute(data, 'variant_quality_filter', variant_quality_filter)
+            # data = parse_multiple_target_attribute(data, 'variation_location_sequence_id',
+            #                                        variation_location_sequence_id)
+            # data = parse_multiple_target_attribute(data, 'variation_location_type', variation_location_type)
+            # data = parse_multiple_target_attribute(data, 'variation_location_interval_start_type',
+            #                                        variation_location_interval_start_type)
+            # data = parse_multiple_target_attribute(data, 'variation_location_interval_start_value',
+            #                                        variation_location_interval_start_value)
+            # data = parse_multiple_target_attribute(data, 'variation_location_interval_end_type',
+            #                                        variation_location_interval_end_type)
+            # data = parse_multiple_target_attribute(data, 'variation_location_interval_end_value',
+            #                                        variation_location_interval_end_value)
+            # data = parse_multiple_target_attribute(data, 'variation_location_interval_type',
+            #                                        variation_location_interval_type)
+            # data = parse_multiple_target_attribute(data, 'variation_alternate_bases', variation_alternate_bases)
+            # data = parse_multiple_target_attribute(data, 'variation_reference_bases', variation_reference_bases)
+            # data = parse_multiple_target_attribute(data, 'variation_variant_type', variation_variant_type)
 
             data['variantInternalId'] = variant_internal_id
             data['identifiers']['genomicHGVSId'] = identifiers_genomic_hgvs_id
@@ -356,6 +449,7 @@ def read_tsv(data):
             data['variation']['alternateBases'] = variation_alternate_bases
             data['variation']['referenceBases'] = variation_reference_bases
             data['variation']['variantType'] = variation_variant_type
+
             filename = '../data/EEE_SV-Pop_1.ALL.sites.20181204.annotated.uniq.tsv'  # File name that was processed (vcf or tsv?)
             data['_info']['vcf2bff']['hostname'] = create_hostname()  # Hostname
             data['_info']['vcf2bff']['filein'] = create_filein(filename)  # File in
@@ -366,15 +460,15 @@ def read_tsv(data):
             data['_info']['vcf2bff']['cwd'] = create_cwd()  # Path to output folder
             data['_info']['vcf2bff']['projectDir'] = create_projectDir()  # Path to output final project directory
             data['_info']['vcf2bff']['version'] = create_version()  # Version of the Beacon
-            write_json(data)
+            write_json(data, filepath)
             data = read_json()
 
 
 """ Adds semicomma to bff """
 
 
-def bff_post_processing():
-    os.system("sed -i 's/}{/},{/' ../results/g_variants_sv.json")
+def bff_post_processing(filename):
+    os.system("sed -i 's/}{/},{/' ../results/" + filename + ".g_variants_sv.json")
 
 
 """ Annotates vcf with svAnnot """
@@ -382,9 +476,10 @@ def bff_post_processing():
 
 def annotate_vcf(filename):
     ##add annotSV to path and run
+    ## set paraments to be user defined, annotation by gene, variant , ( params full / split )
     os.system(
         "export ANNOTSV=/home/mmoldes/Documents/EGA/bioteam/CNV_as_EGA_service/discovery_of_strucutral_variants_as_an_EGA_service/bin/AnnotSV && "
-        "$ANNOTSV/bin/AnnotSV -SVinputFile /home/mmoldes/Documents/EGA/bioteam/structural_variants_beacon_v2/data/" + filename + " -genomeBuild GRCh37 -outputDir /home/mmoldes/Documents/EGA/bioteam/structural_variants_beacon_v2/data"
+        "$ANNOTSV/bin/AnnotSV -SVinputFile /home/mmoldes/Documents/EGA/bioteam/structural_variants_beacon_v2/data/" + filename + " -genomeBuild GRCh37 -outputDir /home/mmoldes/Documents/EGA/bioteam/structural_variants_beacon_v2/data -annotationMode full"
     )
 
 
@@ -402,23 +497,12 @@ def read_json():
 """ write bff output in json array format """
 
 
-def read_json():
-    ## Transform from bff to python dictionary
-    with open('../data/first_json_template.json') as json_file:
-        data = json.load(json_file)  # Load json to python
-
-    return data
-
-
-""" write bff output in json array format """
-
-
-def write_json(data):
+def write_json(data, filepath):
     # Serializing json
     json_object = json.dumps(data, indent=4)
 
     # Writing to sample.json
-    with open("../results/g_variants_sv.json", "a") as outfile:
+    with open("../results/" + filepath + ".g_variants_sv.json", "a") as outfile:
         outfile.write(json_object)
 
 
@@ -453,13 +537,10 @@ if __name__ == "__main__":
         # annotate_vcf("lumpy.vcf.gz")
         # annotate_vcf("EEE_SV-Pop_1.ALL.sites.20181204.vcf.gz")
 
-        # todo
-        # pre_process_tsv("manta.vcf.gz")
-
         data = read_json()  # READS BFF TEMPLATE
-        read_tsv(data)  # POPULATE STUFF
-        # internal_information(data)  # POPULATE INTERNAL INFORMATION
-        bff_post_processing()
+        read_tsv(data, 'lumpy.annotated.tsv')  # POPULATE TEMPLATE
+        # read_tsv(data,'manta.annotated.tsv')  # POPULATE TEMPLATE
+        bff_post_processing('lumpy.annotated.tsv')
 
     except Exception as e:
         logger.error("Error: {}".format(e))
