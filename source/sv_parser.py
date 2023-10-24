@@ -273,6 +273,9 @@ def pre_process_tsv():
 def parse_annotated_target_attribute_pandas(pd, attribute):
     try:
         value = pd[attribute]
+        res = isNaN(value)
+        if res:
+            value = None
     except Exception as e:
         logger.error("Error: {}".format(e))
         value = None
@@ -1093,9 +1096,18 @@ def read_pandas(filepath):
 #     return ensg_term
 
 
+def isNaN(string):
+    return string != string
+
+
 def parse_pandas(pd, data, filepath):
     for index, row in pd.iterrows():
-        print(row['AnnotSV_ID'], row['SV_chrom'])
+        print(row['AnnotSV_ID'], row['SV_chrom'])  # gives a sense of progression
+        ronw_annot_sv_id = row['AnnotSV_ID']
+        if ronw_annot_sv_id == "1_91757755_91767193_DUP_1":
+            print("breakpoint!")
+        # debug !
+
         position_start_integer = parse_annotated_target_attribute_pandas(row, 'SV_start')
         position_end_integer = parse_annotated_target_attribute_pandas(row, 'SV_end')
         position_start = parse_annotated_target_attribute_pandas(row, 'SV_start')
@@ -1104,10 +1116,9 @@ def parse_pandas(pd, data, filepath):
         position_assemblyId = "hg19"
         case_level_data_biosampleId = parse_annotated_target_attribute_pandas(row, 'Samples_ID')
 
-        # PUT into correct place
-        # count number of affected genes
         genes = parse_annotated_target_attribute_pandas(row, 'Gene_name')
-        if genes is not None:
+
+        if genes is None:
             # if math.isnan(genes):
             data['molecularAttributes']['geneIds'][0] = None
         else:
@@ -1175,8 +1186,9 @@ def parse_pandas(pd, data, filepath):
         AnnotSV_ranking_score = parse_annotated_target_attribute_pandas(row, 'AnnotSV_ranking_score')
         AnnotSV_ranking_criteria = parse_annotated_target_attribute_pandas(row, 'AnnotSV_ranking_criteria')
         ACMG_class = parse_annotated_target_attribute_pandas(row, 'ACMG_class')
+        converted_acmg_class = convert_acmg_class(ACMG_class)
 
-        data['molecularAttributes']['annotationImpact'] = ACMG_class
+        data['molecularAttributes']['annotationImpact'] = converted_acmg_class
         # data['identifiers']['genomicHGVSId'] = identifiers_genomic_hgvs_id
         # data['_position']['assemblyId'] = position_assemblyId
 
@@ -1227,7 +1239,6 @@ def bff_post_processing(filename):
 
 def annotate_vcf(filename, genome_build, annotation_mode):
     ##add annotSV to path and run
-    ## set paraments to be user defined, annotation by gene, variant , ( params full / split )
     os.system(
         "export ANNOTSV=/home/mmoldes/Documents/EGA/bioteam/CNV_as_EGA_service/discovery_of_strucutral_variants_as_an_EGA_service/bin/AnnotSV && "
         "$ANNOTSV/bin/AnnotSV -SVinputFile /home/mmoldes/Documents/EGA/bioteam/structural_variants_beacon_v2/data/" + filename + ".vcf.gz -genomeBuild " + genome_build + " -outputDir /home/mmoldes/Documents/EGA/bioteam/structural_variants_beacon_v2/data -annotationMode " + annotation_mode + "")
@@ -1254,6 +1265,34 @@ def write_json(data, filepath):
     # Writing to sample.json
     with open("../results/" + filepath + ".g_variants_sv.json", "a") as outfile:
         outfile.write(json_object)
+
+
+def convert_acmg_class(acmg_value):
+    """
+    SV ranking class into 1 of 5:
+    class 1 (benign)
+    class 2 (likely benign)
+    class 3 (variant of unknown significance)
+    class 4 (likely pathogenic)
+    class 5 (pathogenic)
+    class NA (Non Attributed)
+    """
+    if acmg_value is None:
+        result = None
+    elif acmg_value == 1.0:
+        result = "benign"
+    elif acmg_value == 2.0:
+        result = "likely benign"
+    elif acmg_value == 3.0:
+        result = "variant of unknown significance"
+    elif acmg_value == 4.0:
+        result = "likely pathogenic"
+    elif acmg_value == 5.0:
+        result = "pathogenic"
+    elif acmg_value == "NA":
+        result = "Non Attributed"
+
+    return result
 
 
 def arguments_parser(args):
@@ -1286,14 +1325,22 @@ if __name__ == "__main__":
         #             "nstd167.GRCh37.variant_call", "nstd171.GRCh37.variant_call", "nstd175.GRCh37.variant_call",
         #             "nstd186.GRCh37.variant_call", "nstd102.GRCh37.variant_call"]
 
-        filenames = ["HG001_GRCh37_1_22_v4.2.1_benchmark",
-                     "HG002_GRCh37_1_22_v4.2.1_benchmark",
-                     "HG003_GRCh37_1_22_v4.2.1_benchmark",
-                     "HG004_GRCh37_1_22_v4.2.1_benchmark",
-                     "HG005_GRCh37_1_22_v4.2.1_benchmark",
-                     "HG007_GRCh37_1_22_v4.2.1_benchmark"]
+        # filenames = ["HG001_GRCh37_1_22_v4.2.1_benchmark",
+        #             "HG002_GRCh37_1_22_v4.2.1_benchmark",
+        #             "HG003_GRCh37_1_22_v4.2.1_benchmark",
+        #             "HG004_GRCh37_1_22_v4.2.1_benchmark",
+        #             "HG005_GRCh37_1_22_v4.2.1_benchmark",
+        #             "HG007_GRCh37_1_22_v4.2.1_benchmark"]
 
-        filenames = ["lumpy"]
+        # filenames = [
+        #     "all_ins_raw",
+        #     "all_trp_raw",
+        #     "all_tra_raw",
+        #     "all_middel_raw",
+        #     "all_inv_raw"
+        # ]
+
+        filenames = ["gridss","lumpy","manta","delly"]
 
         for filename in filenames:
 
@@ -1324,6 +1371,8 @@ if __name__ == "__main__":
             except Exception as e:
                 logger.error("Error: {}".format(e))
                 print("POST PROCESSING ISSUE")
+
+
     except Exception as e:
         logger.error("Error: {}".format(e))
         sys.exit(-1)
