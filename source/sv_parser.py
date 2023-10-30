@@ -1326,21 +1326,17 @@ if __name__ == "__main__":
         #             "nstd186.GRCh37.variant_call", "nstd102.GRCh37.variant_call"]
 
         # filenames = ["HG001_GRCh37_1_22_v4.2.1_benchmark",
-        #             "HG002_GRCh37_1_22_v4.2.1_benchmark",
-        #             "HG003_GRCh37_1_22_v4.2.1_benchmark",
-        #             "HG004_GRCh37_1_22_v4.2.1_benchmark",
-        #             "HG005_GRCh37_1_22_v4.2.1_benchmark",
-        #             "HG007_GRCh37_1_22_v4.2.1_benchmark"]
+        #              "HG002_GRCh37_1_22_v4.2.1_benchmark",
+        #              "HG003_GRCh37_1_22_v4.2.1_benchmark",
+        #              "HG004_GRCh37_1_22_v4.2.1_benchmark",
+        #              "HG005_GRCh37_1_22_v4.2.1_benchmark",
+        #              "HG007_GRCh37_1_22_v4.2.1_benchmark"]
 
-        # filenames = [
-        #     "all_ins_raw",
-        #     "all_trp_raw",
-        #     "all_tra_raw",
-        #     "all_middel_raw",
-        #     "all_inv_raw"
-        # ]
+        filenames = ["HG007_GRCh37_1_22_v4.2.1_benchmark"]
 
-        filenames = ["gridss","lumpy","manta","delly"]
+        # filenames = [            "all_ins_raw",            "all_trp_raw",            "all_tra_raw",            "all_middel_raw",            "all_inv_raw"        ]
+
+        # filenames = ["gridss","lumpy","manta","delly"]
 
         for filename in filenames:
 
